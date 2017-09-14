@@ -12,7 +12,8 @@ class App extends Component {
       first: null,
       currentCutLength: 0,
       currentString: '',
-      count: 0
+      count: 0,
+      counter: 0
     }
     
   }
@@ -93,28 +94,33 @@ class App extends Component {
     let self = this;
 
     // console.log(html.doc)
-    let goCaunt = setTimeout(function() {
+    let item = setTimeout(function() {
       let html = self.state.html;
 
       function prepares(str, base) {
 
         // Регулярка проверяющая наличие тегов
         let myR = /<\/?[A-Za-z][^>]*>/;
+        // console.log(str.slice(0, 2000))
         let withoutTag = myR.exec(str.trim());
         // console.log(withoutTag)
         let pwa = '';
         let longside = null;
+        
         if(withoutTag.index < 2) {
           // Cчитаем длинну нашедшего тега от начала
           
-          let startText = withoutTag.index + withoutTag[0].length + self.state.currentCutLength;
+          let startText = withoutTag.index + withoutTag[0].length + self.state.currentCutLength ;
 
           // Строка без тега
           let workString = withoutTag.input.slice(withoutTag[0].length, withoutTag.input.length);
+
+          
           // Ищем в строке первый пробел
           let emptySpace = workString.indexOf(' ');
           // Позиция до первого пробела от начала
-          longside = startText + emptySpace ;
+          // console.log(emptySpace)
+          longside = startText + emptySpace + 1;
 
           self.setState({
             currentCutLength: longside
@@ -123,6 +129,8 @@ class App extends Component {
           // Начало и конец первоначальной строки
           let startRes = base.slice(0, startText);
           let endRes = base.slice(longside, base.length);
+          
+          // console.log(endRes)
           // Берем первое слово до пробела
           let decor = workString.slice(0, emptySpace)
           // Декорируем єто слово
@@ -136,7 +144,7 @@ class App extends Component {
           let decor = str.slice(0, emptySpace)
           let result = self.wordDecorator(decor);
           let startText = self.state.currentCutLength;
-          let longside = startText + emptySpace;
+          let longside = startText + emptySpace + 1;
 
           self.setState({
             currentCutLength: longside
@@ -153,30 +161,36 @@ class App extends Component {
         };
       }
         
-      let second = self.state.html.slice(self.state.currentCutLength, 500).trim();
-      console.log(second , "%c INTERVAL", 'color: red;')
+      let second = self.state.html.slice(self.state.currentCutLength, self.state.html.length).trim();
+      // let second = self.state.html.slice(self.state.currentCutLength, 500).trim();
+      // console.log(self.state.currentCutLength)
       self.setState({
         renderHtml: prepares(second, self.state.html).result,
         count: self.state.count + 1
       })
 
-    }, 5000)
+    }, 3000)
 
+    this.setState({
+      counter: item
+    })
 
   }
 
-  consolidate(item) {
-    // console.log(item)
+  componentWillUnmount() {
+    if(this.state.count > 5) {
+     
+      clearInterval(this.state.counter)
+    }
   }
   render() {
-    // let prepared = this.state.html.slice(1, this.state.html.length - 1);
     let prepared = {__html: this.state.html}
     let anotherVarian = new DOMParser();
 
     let a = anotherVarian.parseFromString(this.state.html, "text/xml")
     let content = document.querySelector('.content');
-    this.consolidate(content)
-    // console.log(content)
+
+
     return (
 
       <div className="App">
