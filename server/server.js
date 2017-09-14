@@ -7,10 +7,10 @@ var app = express();
 
 var PORT = 8080;
 
-app.use(express.static('build')); // @TODO replace with your bundle folder
+app.use(express.static('../build')); // @TODO replace with your bundle folder
 
 app.get('/', function(req, res) {
-    res.sendFile(path.resolve('build/index.html')); // @TODO replace with your index.html path
+    res.sendFile(path.resolve('../build/index.html')); // @TODO replace with your index.html path
 });
 app.get('/root', function(req, res) {
     res.send('HOHOHO')
