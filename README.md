@@ -2,7 +2,7 @@
 1. npm i
 2. npm run dev
 
-http://localhost:3000/
+listen: http://localhost:3000/
 
 ### build
 1. npm i
