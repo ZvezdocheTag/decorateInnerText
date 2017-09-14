@@ -8,10 +8,7 @@ class App extends Component {
     this.state = {
       html: '',
       renderHtml: '',
-      lastIndexOf: 0,
-      first: null,
       currentCutLength: 0,
-      currentString: '',
       count: 0,
       counter: 0
     }
@@ -35,144 +32,76 @@ class App extends Component {
     return {__html: this.state.renderHtml};
   }
 
-
-
-  findNextWord(str, lastId) {
-
-    let index = lastId;
-    let self = this;
-
-    // console.log(index)
-    return function() {
-      let secondIndex = str.indexOf(' ', index + 1);
-      let sliceWord = str.slice(index, secondIndex);
-      let decorWord = self.wordDecorator(sliceWord);
-
-      let full = str.slice(0, index) + decorWord + str.slice(secondIndex, str.length);
-      return {
-        html: decorWord,
-        lastIndex: secondIndex,
-        fullHTML: full
-      }
-      // console.log(decorWord)
-    }
-  }
-
   wordDecorator(word) {
     return `<span class="word-red-bg">${word}</span> `
   }
 
-  // findWord(st) {
-  //   // находим в строке первое совпадение между тегами
-  //   let as = str.match(/(>)(.*?)(?=\<)/i);
-  //   let item = as[0].slice(1, as.length);
+  getResult({startText, base, longside, decor}) {
+    let startRes = base.slice(0, startText);
+    let endRes = base.slice(longside, base.length);
+    let result = this.wordDecorator(decor);
 
-  //   console.log(item);
-
-  // }
-
-  selectString(str) {
-    // находим в строке первое совпадение между тегами
-    let as = str.match(/>[^<<]*/i);
-    let prep = as[0].slice(1, as[0].length).trim();
-    // console.log(prep)
-    let lastIndex = as.index + as[0].indexOf(' ');
-    let data = str.slice(as.index, lastIndex);
-    return {
-      data: data,
-      first: as.index,
-      last: lastIndex,
-      length: as[0].length + as.index
-    };
+    return startRes + result + endRes;
   }
 
-  resultString(str, start, end, data) {
-    return str.substr(0, start + 1) + this.wordDecorator(data) + str.substr(end, str.length);
+  prepares(str, base) {
+    let withoutTag = this.parseStringWithoutTag(str);
+    let pwa = '';
+    let { currentCutLength } = this.state;
+    
+    if(withoutTag.index < 2) {
+      // Cчитаем длинну нашедшего тега от начала
+      let startText = withoutTag.index + withoutTag[0].length + currentCutLength;
+      // Строка без тега
+      let workString = withoutTag.input.slice(withoutTag[0].length, withoutTag.input.length);
+      // Ищем в строке первый пробел
+      let emptySpace = workString.indexOf(' ');
+      // Позиция до первого пробела от начала
+      let longside = startText + emptySpace + 1;
+      let decor = workString.slice(0, emptySpace)
+      this.setState({
+        currentCutLength: longside
+      })
+
+      pwa = this.getResult({startText, base, longside, decor})
+      
+    } else {
+      let emptySpace = str.indexOf(' ');
+      let startText = currentCutLength
+      let longside = startText + emptySpace + 1;
+      let decor = str.slice(0, emptySpace)
+
+      this.setState({
+        currentCutLength: longside
+      })
+     
+      pwa = this.getResult({startText, base, longside, decor})
+    }
+
+    return {
+      result: pwa
+    };
+  }
+  parseStringWithoutTag(str) {
+    // Регулярка проверяющая наличие тегов
+    let myR = /<\/?[A-Za-z][^>]*>/;
+    return myR.exec(str.trim());
   }
 
   componentDidMount() {
     let self = this;
-
-    // console.log(html.doc)
-    let item = setTimeout(function() {
-      let html = self.state.html;
-
-      function prepares(str, base) {
-
-        // Регулярка проверяющая наличие тегов
-        let myR = /<\/?[A-Za-z][^>]*>/;
-        // console.log(str.slice(0, 2000))
-        let withoutTag = myR.exec(str.trim());
-        // console.log(withoutTag)
-        let pwa = '';
-        let longside = null;
-        
-        if(withoutTag.index < 2) {
-          // Cчитаем длинну нашедшего тега от начала
-          
-          let startText = withoutTag.index + withoutTag[0].length + self.state.currentCutLength ;
-
-          // Строка без тега
-          let workString = withoutTag.input.slice(withoutTag[0].length, withoutTag.input.length);
-
-          
-          // Ищем в строке первый пробел
-          let emptySpace = workString.indexOf(' ');
-          // Позиция до первого пробела от начала
-          // console.log(emptySpace)
-          longside = startText + emptySpace + 1;
-
-          self.setState({
-            currentCutLength: longside
-          })
-
-          // Начало и конец первоначальной строки
-          let startRes = base.slice(0, startText);
-          let endRes = base.slice(longside, base.length);
-          
-          // console.log(endRes)
-          // Берем первое слово до пробела
-          let decor = workString.slice(0, emptySpace)
-          // Декорируем єто слово
-          let result = self.wordDecorator(decor);
-          // результат
-          pwa = startRes + result + endRes;
-          
-        } else {
-
-          let emptySpace = str.indexOf(' ');
-          let decor = str.slice(0, emptySpace)
-          let result = self.wordDecorator(decor);
-          let startText = self.state.currentCutLength;
-          let longside = startText + emptySpace + 1;
-
-          self.setState({
-            currentCutLength: longside
-          })
-          let startRes = base.slice(0, startText);
-          let endRes = base.slice(longside, base.length);
-          pwa = startRes + result + endRes;
-
-
-        }
-        return {
-          result: pwa,
-          lastIndex: longside
-        };
-      }
-        
-      let second = self.state.html.slice(self.state.currentCutLength, self.state.html.length).trim();
-      // let second = self.state.html.slice(self.state.currentCutLength, 500).trim();
-      // console.log(self.state.currentCutLength)
+    let launchHTMLdecor = setInterval(function() {
+      let { html, currentCutLength, count } = self.state;
+      let second = html.slice(currentCutLength, html.length).trim();
       self.setState({
-        renderHtml: prepares(second, self.state.html).result,
-        count: self.state.count + 1
+        renderHtml: self.prepares(second, html).result,
+        count: count + 1
       })
 
     }, 3000)
 
     this.setState({
-      counter: item
+      counter: launchHTMLdecor
     })
 
   }
