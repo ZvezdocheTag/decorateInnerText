@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
 
 class App extends Component {
   constructor() {
@@ -9,8 +7,7 @@ class App extends Component {
       html: '',
       renderHtml: '',
       currentCutLength: 0,
-      count: 0,
-      counter: 0
+      delayTime: 3000
     }
     
   }
@@ -18,34 +15,42 @@ class App extends Component {
     fetch('/doc')
     .then(res => res.json())
     .then(res => {
-      // console.log(res)
       this.setState({
         html: res.doc,
         renderHtml: res.doc
       })
     })
-    .catch(err => err)
+    .catch(err => console.log(err))
   }
 
   returnReRender() {
-    let html = this.state.renderHtml;
-    return {__html: this.state.renderHtml};
+    return {__html: this.state.renderHtml}
   }
 
   wordDecorator(word) {
     return `<span class="word-red-bg">${word}</span> `
   }
 
-  getResult({startText, base, longside, decor}) {
+  getResult({startText, base, endText, stringForDecor}) {
     let startRes = base.slice(0, startText);
-    let endRes = base.slice(longside, base.length);
-    let result = this.wordDecorator(decor);
+    let endRes = base.slice(endText, base.length);
+    let result = this.wordDecorator(stringForDecor);
 
     return startRes + result + endRes;
   }
 
+  getWorkingString({ withoutTag }) {
+    return withoutTag.input.slice(withoutTag[0].length, withoutTag.input.length);
+  }
+
   prepares(str, base) {
     let withoutTag = this.parseStringWithoutTag(str);
+    if(withoutTag === null) {
+      console.log("DOCUMENT END")
+      return {
+        resutl: str
+      }
+    }
     let pwa = '';
     let { currentCutLength } = this.state;
     
@@ -53,29 +58,29 @@ class App extends Component {
       // Cчитаем длинну нашедшего тега от начала
       let startText = withoutTag.index + withoutTag[0].length + currentCutLength;
       // Строка без тега
-      let workString = withoutTag.input.slice(withoutTag[0].length, withoutTag.input.length);
+      let workString = this.getWorkingString({ withoutTag });
       // Ищем в строке первый пробел
       let emptySpace = workString.indexOf(' ');
       // Позиция до первого пробела от начала
-      let longside = startText + emptySpace + 1;
-      let decor = workString.slice(0, emptySpace)
+      let endText = startText + emptySpace + 1;
+      let stringForDecor = workString.slice(0, emptySpace)
+
       this.setState({
-        currentCutLength: longside
+        currentCutLength: endText
       })
 
-      pwa = this.getResult({startText, base, longside, decor})
+      pwa = this.getResult({startText, base, endText, stringForDecor})
       
     } else {
       let emptySpace = str.indexOf(' ');
-      let startText = currentCutLength
-      let longside = startText + emptySpace + 1;
-      let decor = str.slice(0, emptySpace)
+      let endText = currentCutLength + emptySpace + 1;
+      let stringForDecor = str.slice(0, emptySpace)
 
       this.setState({
-        currentCutLength: longside
+        currentCutLength: endText
       })
      
-      pwa = this.getResult({startText, base, longside, decor})
+      pwa = this.getResult({startText: currentCutLength, base, endText, stringForDecor})
     }
 
     return {
@@ -98,30 +103,11 @@ class App extends Component {
         count: count + 1
       })
 
-    }, 3000)
-
-    this.setState({
-      counter: launchHTMLdecor
-    })
-
+    }, this.state.delayTime)
   }
 
-  componentWillUnmount() {
-    if(this.state.count > 5) {
-     
-      clearInterval(this.state.counter)
-    }
-  }
   render() {
-    let prepared = {__html: this.state.html}
-    let anotherVarian = new DOMParser();
-
-    let a = anotherVarian.parseFromString(this.state.html, "text/xml")
-    let content = document.querySelector('.content');
-
-
     return (
-
       <div className="App">
         <div dangerouslySetInnerHTML={this.returnReRender()} />;
       </div>
