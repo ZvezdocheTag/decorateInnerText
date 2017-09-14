@@ -95,7 +95,7 @@ class App extends Component {
 
   componentDidMount() {
     let self = this;
-    let launchHTMLdecor = setInterval(function() {
+    setInterval(function() {
       let { html, currentCutLength, count } = self.state;
       let second = html.slice(currentCutLength, html.length).trim();
       self.setState({
